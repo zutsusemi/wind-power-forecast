@@ -6,15 +6,14 @@ from torch.utils import data
 
 def process_dataset(path, step = 30):
     train_val = pd.read_csv(path)
-    speed_cos = train_val['speed_cos'].to_numpy()
-    speed_sin = train_val['speed_sin'].to_numpy()
+    speed = train_val['Wind Speed (m/s)'].to_numpy()
     power_curve = train_val['Theoretical_Power_Curve (KWh)'].to_numpy()
     active_power = train_val['LV ActivePower (kW)'].to_numpy()
-    train_val_set = np.c_[speed_cos, speed_sin, power_curve, active_power]
+    train_val_set = np.c_[speed, power_curve, active_power]
     x, y = [], []
     for j in range(step, train_val_set.shape[0]):
         x.append(train_val_set[j - step : j - 1, :])
-        y.append(train_val_set[j, 3])
+        y.append(train_val_set[j, 2])
     return x, y
 
 class Scada(data.Dataset):

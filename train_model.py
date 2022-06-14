@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 from dataset.data import Scada
 from utils.split import DatasetSampler
+import torch.nn.functional as f
 from model.lstm import model_lstm
 
 
@@ -19,7 +20,7 @@ sampler = DatasetSampler(len(dataset), len(dataset) // 5)
 train, val = sampler(dataset)
 train_loader = DataLoader(train, batchsize, shuffle=True)
 val_loader = DataLoader(val, 1, shuffle=True)
-model = model_lstm(4, 64, 1, device=device).to(device)
+model = model_lstm(3, 64, 1, device=device).to(device)
 model.to(device)
 loss = torch.nn.MSELoss(reduction='mean')
 optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
@@ -38,12 +39,13 @@ class trainer:
             for m, [x, y] in enumerate(self.train_loader):
                 x, y = x.permute(1, 0, 2).float().to(self.device), y.float().to(self.device)
                 out = self.model(x)
+                out = f.sigmoid(out.squeeze())
                 self.optm.zero_grad()
-                loss = self.loss(out.squeeze(), y)
+                loss = self.loss(out, f.sigmoid(y))
                 loss.backward()
                 self.optm.step()
                 if (m % 100) == 0:
-                    print('Iter: {}, Loss: {:.5f}'.format(m + 1, loss))
+                    print('Epoch:{}, Iter: {}, Loss: {:.5f}'.format(j + 1, m + 1, loss))
 
     def train(self):
         return self._train()
