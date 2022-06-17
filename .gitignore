@@ -1,2 +1,9 @@
 # ignore __pycache__
 __pycache__/
+
+# ignore data/
+data/
+!src/data/
+
+# ignore .sh
+*.sh
