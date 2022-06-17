@@ -19,7 +19,7 @@ Due to submodules, you should recursively clone the project.
     ```
 2. Simply create an virtural environment with `python>=3.8` and run `pip install -r requirements.txt` to download the required packages. If you use `anaconda3` or `miniconda`, you can run following instructions to download the required packages in python. 
     ```bash
-        conda create -y -n BN python=3.8
+        conda create -y -n forecast python=3.8
         conda activate forecast
         pip install pip --upgrade
         pip install -r requirements.txt
