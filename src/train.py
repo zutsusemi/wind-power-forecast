@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-class trainer:
+class Trainer:
     def __init__(self, train_loader, val_loader, model, loss, optm, num_e, device):
         self.model = model
         self.train_loader  = train_loader
@@ -15,9 +15,9 @@ class trainer:
             for m, [x, y] in enumerate(self.train_loader):
                 x, y = x.permute(1, 0, 2).float().to(self.device), y.float().to(self.device)
                 out = self.model(x)
-                out = f.sigmoid(out.squeeze())
+                out = torch.sigmoid(out.squeeze())
                 self.optm.zero_grad()
-                loss = self.loss(out, f.sigmoid(y))
+                loss = self.loss(out, torch.sigmoid(y))
                 loss.backward()
                 self.optm.step()
                 if (m % 100) == 0:
@@ -55,5 +55,5 @@ def train(device: torch.device,
     loss = torch.nn.MSELoss(reduction='mean')
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
-    trainer = trainer(train_loader, val_loader, model, loss, optimizer, epochs, device)
+    trainer = Trainer(train_loader, val_loader, model, loss, optimizer, epochs, device)
     trainer.train()
