@@ -24,7 +24,7 @@ Due to submodules, you should recursively clone the project.
         pip install pip --upgrade
         pip install -r requirements.txt
         conda activate forecast
-        conda install pytorch=1.10.2 torchvision=0.11.3 torchaudio=0.10.2 cudatoolkit=11.1 -c pytorch -c nvidia
+        conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
     ```
 
 ## Git Usage
