@@ -5,7 +5,8 @@ from torch.utils import data
 from typing import Tuple
 
 def process_dataset(path: str, 
-                    step: int = 30) -> Tuple[np.array, np.array]:
+                    step: int = 30,
+                    output_step: int = 144) -> Tuple[np.array, np.array]:
     """helper function to process the dataset
 
     Args:
@@ -22,16 +23,17 @@ def process_dataset(path: str,
     active_power = train_val['LV ActivePower (kW)'].to_numpy()
     train_val_set = np.c_[speed, power_curve, active_power]
     x, y = [], []
-    for j in range(step, train_val_set.shape[0]):
+    for j in range(step, train_val_set.shape[0] - output_step):
         x.append(train_val_set[j - step : j - 1, :])
-        y.append(train_val_set[j, 2])
+        y.append(train_val_set[j : j + output_step, 2])
     return x, y
 
 
 class Scada(data.Dataset):
     def __init__(self, 
                  path: str, 
-                 step: int = 30):
+                 step: int = 30,
+                 out_step: int = 144):
         """constructor
 
         Args:
@@ -40,7 +42,7 @@ class Scada(data.Dataset):
         """
         self.path = path
         self.step = step
-        self._x, self._y = process_dataset(path, step)
+        self._x, self._y = process_dataset(path, step, out_step)
     
     def __len__(self):
         return len(self._y)
@@ -49,5 +51,5 @@ class Scada(data.Dataset):
         return self._x[index], self._y[index]
 
 
-def load() -> data.Dataset:
-    return Scada('../data/train_val.csv', step = 30)
+def load(PATH = '../data/train_val.csv') -> data.Dataset:
+    return Scada(PATH, step = 512, out_step = 144)

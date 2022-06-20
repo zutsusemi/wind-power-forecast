@@ -1,27 +1,58 @@
 import torch
 from torch.utils.data import DataLoader, Dataset
+import os
 
 class Trainer:
-    def __init__(self, train_loader, val_loader, model, loss, optm, num_e, device):
+    def __init__(self, train_loader, val_loader, model, loss, optm, num_e, device, **kwargs):
         self.model = model
         self.train_loader  = train_loader
         self.val_loader = val_loader
         self.device = device
         self.loss, self.optm = loss, optm
         self.num_e = num_e
+        self.load = None
+        self.save = None
+        self.s_iter = None
+        if len(kwargs.keys()) > 0:
+            self.load = kwargs['load']
+            self.save = kwargs['save']
+            self.s_iter = kwargs['siter']
         print(self.model)
+    def _checkpoint(self, mode = 'save', **kwargs):
+        if mode == 'save' and "path" in kwargs.keys():
+            pth = kwargs['path']
+            num_iter = kwargs['num_iter']
+            os.makedirs(pth, exist_ok = True)
+            torch.save(self.model.state_dict(), pth + 'model_weight'+'_'+str(num_iter) + ".pth")
+            
+            print('[logger] Checkpoint '+str(num_iter)+' saved.')
+        elif mode == 'load' and "path" in kwargs.keys():
+            pth = kwargs['path']
+            self.model.load_state_dict(pth)
+
+            print('Loading checkpoint from ' + pth)
     def _train(self):
+        count = 0
+        if self.load is not None:
+            self._checkpoint('load', path=self.load)
         for j in range(self.num_e):
             for m, [x, y] in enumerate(self.train_loader):
                 x, y = x.permute(1, 0, 2).float().to(self.device), y.float().to(self.device)
                 out = self.model(x)
-                out = torch.sigmoid(out.squeeze())
+                out = out.squeeze().permute(1,0)
                 self.optm.zero_grad()
-                loss = self.loss(out, torch.sigmoid(y))
+                loss = self.loss(out, y) / (out.shape[0] * out.shape[1])
                 loss.backward()
                 self.optm.step()
                 if (m % 100) == 0:
-                    print('Epoch:{}, Iter: {}, Loss: {:.5f}'.format(j + 1, m + 1, loss))
+                    print('Epoch:{}, Iter: {}, Tol Iter: {}, Loss: {:.5f}'.format(j + 1, m + 1, count + 1, loss))
+                
+                if self.save is not None:
+                    if count % self.s_iter == 0:
+                        self._checkpoint('save', path = self.save, num_iter = count)
+
+                count += 1
+    
 
     def train(self):
         return self._train()
@@ -32,7 +63,10 @@ def train(device: torch.device,
           val_set: Dataset,
           batch_size: int, 
           lr: float, 
-          epochs: int) -> None:
+          epochs: int,
+          load = None, 
+          save = None,
+          s_iter = None) -> None:
     """the training function
 
     Args:
@@ -52,8 +86,8 @@ def train(device: torch.device,
     val_loader = DataLoader(val_set, 1, shuffle=True)
 
     # construct the loss function and optimizer
-    loss = torch.nn.MSELoss(reduction='mean')
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+    loss = torch.nn.MSELoss(reduction='sum')
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
 
-    trainer = Trainer(train_loader, val_loader, model, loss, optimizer, epochs, device)
+    trainer = Trainer(train_loader, val_loader, model, loss, optimizer, epochs, device, load = load, save = save, siter = s_iter)
     trainer.train()

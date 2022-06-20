@@ -21,13 +21,21 @@ def add_args() -> argparse.Namespace:
                         help="set the device.")
     parser.add_argument("--seed", default=0, type=int,
                         help="set the random seed.")
+    parser.add_argument("--load", default=None, type=str,
+                        help="load checkpoint.")
+    parser.add_argument("--save", default='./output/', type=str,
+                        help="save checkpoint path.")
+    parser.add_argument("--s_iter", default=100, type=int,
+                        help="save checkpoint per s_iter iters.")
     parser.add_argument("--save_root", default="../outs/tmp/", type=str,
                         help='the path of saving results.')
     parser.add_argument("--dataset", default="scada", type=str,
                         help='the dataset name.')
-    parser.add_argument("--model", default="lstm", type=str,
+    parser.add_argument('--data_path', default='./train_val.csv', type=str,
+                        help='the dataset path.')
+    parser.add_argument("--model", default="seq2seq", type=str,
                         help='the model name.')
-    parser.add_argument("--bs", default=128, type=int,
+    parser.add_argument("--bs", default=25, type=int,
                         help="set the batch size")
     parser.add_argument("--lr", default=0.01, type=float,
                         help="set the learning rate")
@@ -80,7 +88,7 @@ def main():
 
     # prepare the dataset
     logger.info("#########preparing dataset....")
-    train_set, val_set = prepare_dataset(args.dataset)
+    train_set, val_set = prepare_dataset(args.dataset, args.data_path)
 
     # prepare the model
     logger.info("#########preparing model....")
@@ -94,7 +102,11 @@ def main():
           val_set = val_set,
           batch_size = args.bs,
           lr = args.lr, 
-          epochs = args.epochs,)
+          epochs = args.epochs,
+          load = args.load,
+          save = args.save,
+          s_iter = args.s_iter,
+          )
 
 
 if __name__ == "__main__":

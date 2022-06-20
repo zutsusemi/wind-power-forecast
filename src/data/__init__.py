@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 from torch.utils.data.dataset import random_split
 from typing import Tuple
 
-def prepare_dataset(dataset: str) -> Tuple[Dataset, Dataset]:
+def prepare_dataset(dataset: str, PATH) -> Tuple[Dataset, Dataset]:
     """prepare the dataset.
     Args:
         dataset (str): the dataset name.
@@ -11,7 +11,7 @@ def prepare_dataset(dataset: str) -> Tuple[Dataset, Dataset]:
     """
     if dataset == "scada":
         import data.scada as scada
-        dataset = scada.load()
+        dataset = scada.load(PATH)
         size = [len(dataset) - len(dataset) // 5, len(dataset) // 5]
         train, val = random_split(dataset, size)
     else:
