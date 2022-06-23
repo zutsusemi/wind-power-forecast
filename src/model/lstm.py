@@ -8,6 +8,7 @@ class LSTM(nn.Module):
                  device: torch.device,
                  input_ftr: int, 
                  hidden_ftr: int, 
+                 output_steps: int,
                  output_ftr: int) -> None:
         """constructor
 
@@ -24,18 +25,23 @@ class LSTM(nn.Module):
         self.device = device
         self.input_ftr = input_ftr
         self.hidden_ftr  = hidden_ftr
+        self.output_steps = output_steps
         self.output_ftr = output_ftr
         
         # construct the model
-        self.lstm  = nn.LSTM(input_size = input_ftr, hidden_size = hidden_ftr)
+        self.lstm  = nn.GRU(input_size = input_ftr, hidden_size = hidden_ftr, num_layers = 6)
         self.linear = nn.Linear(in_features = hidden_ftr, out_features = output_ftr)
     
     def forward(self, 
                 x: torch.Tensor) -> torch.Tensor:
-        h0 = torch.zeros(1, x.shape[1], self.hidden_ftr).to(self.device)
-        t0 = torch.zeros(1, x.shape[1], self.hidden_ftr).to(self.device)
-        _, (h_out, _)  = self.lstm(x, (h0, t0)) # (L, B?, D*H_out = H_out)
-        h_out = self.linear(h_out)
+        # x: (L, B, N)
+        padding = torch.zeros(self.output_steps, x.shape[1], x.shape[2]).to(self.device) # (S, B, N)
+        x = torch.cat((x, padding), dim=0)
+        h0 = torch.zeros(6, x.shape[1], self.hidden_ftr).to(self.device)
+        # t0 = torch.zeros(6, x.shape[1], self.hidden_ftr).to(self.device)
+        out, _  = self.lstm(x, h0) # (L, B?, D*H_out = H_out)
+        h_out = self.linear(out)
+        h_out = h_out[- self.output_steps:, :, :]
         return h_out
 
 

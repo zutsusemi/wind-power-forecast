@@ -19,7 +19,7 @@ def prepare_model(device: torch.device,
     logger.info(f"prepare the {model_name} model for dataset {dataset}")
     if model_name == "lstm" and dataset == "scada":
         import model.lstm as lstm
-        model = lstm.LSTM(device, 3, 64, 1).to(device)
+        model = lstm.LSTM(device, 1, 64, 144, 1).to(device)
     elif model_name == 'seq2seq' and dataset == 'scada':
         import model.lstm as lstm
         model = lstm.Seq2SeqLSTM(1, 64, 1, 144, device).to(device)
