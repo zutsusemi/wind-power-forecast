@@ -21,11 +21,11 @@ def process_dataset(path: str,
     speed = train_val['Wind Speed (m/s)'].to_numpy()
     power_curve = train_val['Theoretical_Power_Curve (KWh)'].to_numpy()
     active_power = train_val['LV ActivePower (kW)'].to_numpy()
-    train_val_set = np.c_[speed, power_curve, active_power]
+    train_val_set = np.c_[active_power]
     x, y = [], []
     for j in range(step, train_val_set.shape[0] - output_step):
         x.append(train_val_set[j - step : j - 1, :])
-        y.append(train_val_set[j : j + output_step, 2])
+        y.append(train_val_set[j : j + output_step, 0])
     return x, y
 
 

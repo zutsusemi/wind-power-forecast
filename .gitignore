@@ -5,8 +5,13 @@ __pycache__/
 data/
 !src/data/
 
-# ignore .sh
+# ignore .sh / .csv
 *.sh
+*.csv
+
 
 # ignore outs/
 outs/
+
+# ignore output/
+output/

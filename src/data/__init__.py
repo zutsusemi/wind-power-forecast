@@ -12,7 +12,7 @@ def prepare_dataset(dataset: str, PATH) -> Tuple[Dataset, Dataset]:
     if dataset == "scada":
         import data.scada as scada
         dataset = scada.load(PATH)
-        size = [len(dataset) - len(dataset) // 5, len(dataset) // 5]
+        size = [len(dataset) - len(dataset) // 190, len(dataset) // 190]
         train, val = random_split(dataset, size)
     else:
         raise NotImplementedError(f"dataset {dataset} is not implemented.")

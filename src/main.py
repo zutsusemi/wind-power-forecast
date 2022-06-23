@@ -35,11 +35,11 @@ def add_args() -> argparse.Namespace:
                         help='the dataset path.')
     parser.add_argument("--model", default="seq2seq", type=str,
                         help='the model name.')
-    parser.add_argument("--bs", default=25, type=int,
+    parser.add_argument("--bs", default=5, type=int,
                         help="set the batch size")
     parser.add_argument("--lr", default=0.01, type=float,
                         help="set the learning rate")
-    parser.add_argument("--epochs", default=500, type=int,
+    parser.add_argument("--epochs", default=19, type=int,
                         help="set the number of epochs")
     # set if using debug mod
     parser.add_argument("-v", "--verbose", action="store_true", dest="verbose",

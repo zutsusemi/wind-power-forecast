@@ -1,6 +1,11 @@
 import torch
 from torch.utils.data import DataLoader, Dataset
 import os
+from tqdm import tqdm
+import numpy as np
+
+
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 class Trainer:
     def __init__(self, train_loader, val_loader, model, loss, optm, num_e, device, **kwargs):
@@ -31,6 +36,45 @@ class Trainer:
             self.model.load_state_dict(pth)
 
             print('Loading checkpoint from ' + pth)
+    
+    def _evaluation(self, count=0):
+        self.model.eval()
+        sum = 0
+        N = 0
+        for m, [x, y] in tqdm(enumerate(self.val_loader)):
+                x, y = x.permute(1, 0, 2).float().to(self.device), y.float().to(self.device)
+                # print(x.shape)
+                out = self.model(x)
+                # print(out.shape)
+                out = out.squeeze(1).permute(1,0)
+                loss = ((out - y)**2).sum()
+                
+                sum += loss
+                N += out.shape[0] * out.shape[1]
+
+                if m == 0:
+                
+                    import matplotlib.pyplot as plt
+                    fig = plt.figure(figsize=(10,10))
+                    x_ = x[:, 0, 0].detach().cpu().numpy() # (L, B, 1)
+                    y_ = y.squeeze().detach().cpu().numpy()
+                    out_ = out.squeeze().detach().cpu().numpy()
+
+                    plt.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, y_]), label='gt')
+                    plt.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, out_]), label='predict')
+
+
+                    plt.legend()
+                    path = os.path.join(self.save, f'visualization/')
+                    os.makedirs(path, exist_ok=True)
+                    plt.savefig(os.path.join(path, f'{count}.jpg'))
+
+                    
+        
+        sum /= N # (((y^ - y)**2)/N)**0.5
+        
+        return sum
+               
     def _train(self):
         count = 0
         if self.load is not None:
@@ -44,11 +88,13 @@ class Trainer:
                 loss = self.loss(out, y) / (out.shape[0] * out.shape[1])
                 loss.backward()
                 self.optm.step()
-                if (m % 100) == 0:
-                    print('Epoch:{}, Iter: {}, Tol Iter: {}, Loss: {:.5f}'.format(j + 1, m + 1, count + 1, loss))
+                if (m % 10) == 0:
+                    print('Epoch:{}, Iter: {}, Tol Iter: {}, Loss: {:.5f}, RMSE: {:.5f}'.format(j + 1, m + 1, count + 1, loss, loss ** (1/2)))
                 
                 if self.save is not None:
                     if count % self.s_iter == 0:
+                        self._evaluation(count)
+                        self.model.train()
                         self._checkpoint('save', path = self.save, num_iter = count)
 
                 count += 1
