@@ -71,31 +71,46 @@ class Seq2SeqLSTM(nn.Module):
         self.output_step = output_step
         self.output_ftr = output_ftr
         self.device  = device
-        self.enc = nn.LSTMCell(input_size= input_ftr, hidden_size = hidden_ftr)
-        self.dec = nn.LSTMCell(input_size= hidden_ftr, hidden_size = hidden_ftr)
+        self.layers = 9+1
+        self.enc_first = nn.LSTMCell(input_size= input_ftr, hidden_size = hidden_ftr)
+        self.enc = nn.ModuleList([nn.LSTMCell(input_size= hidden_ftr, hidden_size = hidden_ftr) for _ in range(self.layers)])
+        self.dec_first = nn.LSTMCell(input_size= hidden_ftr, hidden_size = hidden_ftr)
+        self.dec = nn.ModuleList([nn.LSTMCell(input_size= hidden_ftr, hidden_size = hidden_ftr) for _ in range(self.layers)])
         self.linear = nn.Linear(in_features=hidden_ftr, out_features=output_ftr)
     def forward(self, x):
         '''
         x: (L, B, H_input)
         '''
-        h = torch.zeros(x.shape[1], self.hidden_ftr).to(self.device)
-        c = torch.zeros(x.shape[1], self.hidden_ftr).to(self.device)
+        h = [torch.zeros(x.shape[1], self.hidden_ftr).to(self.device) for _ in range(self.layers+1)]
+        c = [torch.zeros(x.shape[1], self.hidden_ftr).to(self.device) for _ in range(self.layers+1)]
         # _, (h_out, _)  = self.lstm(x, (h0, t0)) # (L, B?, D*H_out = H_out)
         L, B = x.shape[0], x.shape[1]
         '''
         Encoder
         '''
         for j in range(L):
-            h, c = self.enc(x[j], (h, c)) # B, H
+            h[0], c[0] = self.enc_first(x[j], (h[0], c[0]))
+            xj = h[0]
+            for layer, enc in enumerate(self.enc):
+                l = layer+1
+                h[l], c[l] = enc(xj, (h[l], c[l]))
+                xj = h[l]
+            
+                
         
         '''
         Decoder
         '''
         pred = []
-        y = h
+        y = h[-1]
         for j in range(self.output_step):
-            h, c = self.dec(y, (h, c))
-            y = h
-            pred.append(self.linear(y)) # B, H_out
-        h_out = torch.stack(pred)
+            h[0], c[0] = self.dec_first(y, (h[0], c[0]))
+            xj = h[0]
+            for layer, block in enumerate(self.enc):
+                l = layer+1
+                h[l], c[l] = block(xj, (h[l], c[l]))
+                xj = h[l]
+            
+            pred.append(h[l])
+        h_out = self.linear(torch.stack(pred))
         return h_out

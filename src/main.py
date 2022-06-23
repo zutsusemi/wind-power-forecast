@@ -33,7 +33,7 @@ def add_args() -> argparse.Namespace:
                         help='the dataset name.')
     parser.add_argument('--data_path', default='./train_val.csv', type=str,
                         help='the dataset path.')
-    parser.add_argument("--model", default="lstm", type=str,
+    parser.add_argument("--model", default="seq2seq", type=str,
                         help='the model name.')
     parser.add_argument("--bs", default=5, type=int,
                         help="set the batch size")
