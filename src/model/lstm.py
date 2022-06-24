@@ -30,12 +30,12 @@ class LSTM(nn.Module):
         
         # construct the model
         self.lstm  = nn.GRU(input_size = input_ftr, hidden_size = hidden_ftr, num_layers = 6)
-        self.linear = nn.Linear(in_features = hidden_ftr, out_features = output_ftr)
+        self.linear = nn.Linear(in_features = hidden_ftr, out_features = output_ftr, bias=True)
     
     def forward(self, 
                 x: torch.Tensor) -> torch.Tensor:
         # x: (L, B, N)
-        padding = torch.zeros(self.output_steps, x.shape[1], x.shape[2]).to(self.device) # (S, B, N)
+        padding = torch.ones(self.output_steps, x.shape[1], x.shape[2]).to(self.device) # (S, B, N)
         x = torch.cat((x, padding), dim=0)
         h0 = torch.zeros(6, x.shape[1], self.hidden_ftr).to(self.device)
         # t0 = torch.zeros(6, x.shape[1], self.hidden_ftr).to(self.device)
@@ -71,12 +71,12 @@ class Seq2SeqLSTM(nn.Module):
         self.output_step = output_step
         self.output_ftr = output_ftr
         self.device  = device
-        self.layers = 9+1
+        self.layers = 1+1
         self.enc_first = nn.LSTMCell(input_size= input_ftr, hidden_size = hidden_ftr)
         self.enc = nn.ModuleList([nn.LSTMCell(input_size= hidden_ftr, hidden_size = hidden_ftr) for _ in range(self.layers)])
         self.dec_first = nn.LSTMCell(input_size= hidden_ftr, hidden_size = hidden_ftr)
         self.dec = nn.ModuleList([nn.LSTMCell(input_size= hidden_ftr, hidden_size = hidden_ftr) for _ in range(self.layers)])
-        self.linear = nn.Linear(in_features=hidden_ftr, out_features=output_ftr)
+        self.linear = nn.Linear(in_features=hidden_ftr, out_features=output_ftr, bias=False)
     def forward(self, x):
         '''
         x: (L, B, H_input)
@@ -89,7 +89,7 @@ class Seq2SeqLSTM(nn.Module):
         Encoder
         '''
         for j in range(L):
-            h[0], c[0] = self.enc_first(x[j], (h[0], c[0]))
+            h[0], c[0] = self.enc_first(x[j]/10000, (h[0], c[0]))
             xj = h[0]
             for layer, enc in enumerate(self.enc):
                 l = layer+1
