@@ -29,15 +29,15 @@ def add_args() -> argparse.Namespace:
                         help="save checkpoint per s_iter iters.")
     parser.add_argument("--save_root", default="../outs/tmp/", type=str,
                         help='the path of saving results.')
-    parser.add_argument("--dataset", default="scada", type=str,
+    parser.add_argument("--dataset", default="kddcup", type=str,
                         help='the dataset name.')
-    parser.add_argument('--data_path', default='./train_val.csv', type=str,
+    parser.add_argument('--data_path', default='./kdd/sdwpf134_initial_kddcup.csv', type=str,
                         help='the dataset path.')
-    parser.add_argument("--model", default='lstm', type=str,
+    parser.add_argument("--model", default='attention', type=str,
                         help='the model name.')
     parser.add_argument("--bs", default=5, type=int,
                         help="set the batch size")
-    parser.add_argument("--lr", default=0.001, type=float,
+    parser.add_argument("--lr", default=0.0001, type=float,
                         help="set the learning rate")
     parser.add_argument("--epochs", default=19, type=int,
                         help="set the number of epochs")

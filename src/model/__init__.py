@@ -17,12 +17,15 @@ def prepare_model(device: torch.device,
     """
     logger = get_logger(__name__)
     logger.info(f"prepare the {model_name} model for dataset {dataset}")
-    if model_name == "lstm" and dataset == "scada":
+    if model_name == "lstm":
         import model.lstm as lstm
-        model = lstm.LSTM(device, 1, 64, 144, 1).to(device)
+        model = lstm.LSTM(device, 11, 64, 144, 1).to(device)
     elif model_name == 'seq2seq' and dataset == 'scada':
         import model.lstm as lstm
         model = lstm.Seq2SeqLSTM(1, 64, 1, 144, device).to(device)
+    elif model_name == 'attention':
+        import model.lstm as lstm
+        model = lstm.Tre(11, 64, 1, 512, 144, device).to(device)
     else:
         raise ValueError(f"unknown model name: {model_name}")
     return model

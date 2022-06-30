@@ -14,6 +14,11 @@ def prepare_dataset(dataset: str, PATH) -> Tuple[Dataset, Dataset]:
         dataset = scada.load(PATH)
         size = [len(dataset) - len(dataset) // 3000, len(dataset) // 3000]
         train, val = random_split(dataset, size)
+    elif dataset == 'kddcup':
+        import data.kddcup as kddcup
+        dataset = kddcup.load(PATH)
+        size = [len(dataset) - len(dataset) // 3000, len(dataset) // 3000]
+        train, val = random_split(dataset, size)
     else:
         raise NotImplementedError(f"dataset {dataset} is not implemented.")
     return train, val

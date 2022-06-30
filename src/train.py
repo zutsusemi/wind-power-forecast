@@ -56,7 +56,7 @@ class Trainer:
                 
                     import matplotlib.pyplot as plt
                     fig = plt.figure(figsize=(10,10))
-                    x_ = x[:, 0, 0].detach().cpu().numpy() # (L, B, 1)
+                    x_ = x[:, 0, 10].detach().cpu().numpy() # (L, B, 1)
                     y_ = y.squeeze().detach().cpu().numpy()
                     out_ = out.squeeze().detach().cpu().numpy()
 
@@ -72,8 +72,9 @@ class Trainer:
                     
         
         sum /= N # (((y^ - y)**2)/N)**0.5
+        sum = sum ** 0.5
         
-        return sum
+        return sum.detach().cpu().numpy()
                
     def _train(self):
         count = 0
@@ -93,7 +94,7 @@ class Trainer:
                 
                 if self.save is not None:
                     if count % self.s_iter == 0:
-                        self._evaluation(count)
+                        print(self._evaluation(count))
                         self.model.train()
                         self._checkpoint('save', path = self.save, num_iter = count)
 
