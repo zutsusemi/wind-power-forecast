@@ -42,23 +42,23 @@ class Trainer:
         sum = 0
         N = 0
         for m, [x, y] in tqdm(enumerate(self.val_loader)):
-                x, y = x.permute(1, 0, 2).float().to(self.device), y.float().to(self.device)
+                x, y = x.float().to(self.device), y.float().to(self.device)
                 # print(x.shape)
                 out = self.model(x)
                 # print(out.shape)
-                out = out.squeeze(1).permute(1,0)
+                out = out.squeeze(-1).permute(1,0,2)
                 loss = ((out - y)**2).sum()
                 
                 sum += loss
-                N += out.shape[0] * out.shape[1]
+                N += out.shape[0] * out.shape[1] * out.shape[2]
 
                 if m == 0:
                 
                     import matplotlib.pyplot as plt
                     fig = plt.figure(figsize=(10,10))
-                    x_ = x[:, 0, 10].detach().cpu().numpy() # (L, B, 1)
-                    y_ = y.squeeze().detach().cpu().numpy()
-                    out_ = out.squeeze().detach().cpu().numpy()
+                    x_ = x[0, :, 0, 10].detach().cpu().numpy() # (L, B, 1)
+                    y_ = y[0, :, 0].squeeze().detach().cpu().numpy()
+                    out_ = out[0, :, 0].squeeze().detach().cpu().numpy()
 
                     plt.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, y_]), label='gt')
                     plt.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, out_]), label='predict')
@@ -82,11 +82,11 @@ class Trainer:
             self._checkpoint('load', path=self.load)
         for j in range(self.num_e):
             for m, [x, y] in enumerate(self.train_loader):
-                x, y = x.permute(1, 0, 2).float().to(self.device), y.float().to(self.device)
+                x, y = x.float().to(self.device), y.float().to(self.device)
                 out = self.model(x)
-                out = out.squeeze().permute(1,0)
+                out = out.squeeze(-1).permute(1,0,2)
                 self.optm.zero_grad()
-                loss = self.loss(out, y) / (out.shape[0] * out.shape[1])
+                loss = self.loss(out, y) / (out.shape[0] * out.shape[1] * out.shape[2])
                 loss.backward()
                 self.optm.step()
                 if (m % 10) == 0:

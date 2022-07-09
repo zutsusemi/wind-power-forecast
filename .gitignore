@@ -4,6 +4,7 @@ __pycache__/
 # ignore data/
 data/
 !src/data/
+kdd/
 
 # ignore .sh / .csv
 *.sh

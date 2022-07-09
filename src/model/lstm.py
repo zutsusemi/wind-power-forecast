@@ -129,6 +129,7 @@ class Tre(nn.Module):
         self.input_ftr = input_ftr
         self.hidden_ftr  = hidden_ftr
         self.output_step = output_step
+        self.input_step = input_step
         self.output_ftr = output_ftr
         self.device  = device
         self.enc_layer = nn.TransformerEncoderLayer(self.hidden_ftr, 8)
@@ -138,12 +139,26 @@ class Tre(nn.Module):
         self.out = nn.Linear(self.hidden_ftr, self.output_ftr)
         self.linear = nn.Linear(input_step, 1, bias=False)
         self.norm = nn.BatchNorm1d(self.hidden_ftr)
-
+    
+    def _pos_embedding(self, embed_dim):
+        pos = torch.arange(self.input_step)
+        '''
+        perform sinosoidal encoding
+        '''
+        indices = torch.arange(embed_dim//2)
+        indices = 1./(10000 ** (indices/embed_dim*2)) # (d,)
+        sin_encoding = torch.sin(indices.view(-1, embed_dim//2) * pos.unsqueeze(1))
+        cos_encoding = torch.cos(indices.view(-1, embed_dim//2) * pos.unsqueeze(1)) #(t, d)
+        enc = torch.cat([sin_encoding, cos_encoding], dim=1)
+        enc = enc.unsqueeze(1)
+        return enc
     def forward(self, x):
         '''
             x: (L, B, H_input)
         '''
         x = self.proj(x) #(L, B, H_hidden)
+        pos = self._pos_embedding(x.shape[-1]).to(self.device)
+        x = x + pos
         x = self.enc(x) #(L, B, H_hidden)
         encoding = self.linear(x.permute(1,2,0)).squeeze(2) #(B, H_hidden)
         encoding = self.norm(encoding)
@@ -153,10 +168,91 @@ class Tre(nn.Module):
         for j in range(self.output_step):
             encoding = self.dec(y, encoding)
             # encoding = hx + encoding
-            xj = encoding
-            pred.append(xj)
+            y = encoding
+            pred.append(y)
         h_out = self.out(torch.stack(pred))
         return h_out
+
+
+
+class MLP(nn.Module):
+    def __init__(self,
+                input_ftr,
+                hidden_ftr,
+                output_ftr,
+                num_sub_features,
+                hidden_layer=3
+                ):
+        super(MLP, self).__init__()
+        self.norm_a = nn.BatchNorm1d(num_sub_features)
+        self.linear_a = nn.Linear(input_ftr, hidden_ftr)
+        self.norm_h = nn.BatchNorm1d(num_sub_features)
+        self.hidden = nn.Linear(hidden_ftr, hidden_ftr)
+        self.norm = nn.BatchNorm1d(num_sub_features)
+        self.linear_o = nn.Linear(hidden_ftr, output_ftr)
+        self.relu = nn.ReLU()
+    def forward(self, x):
+        x = self.norm_a(x)
+        x = self.relu(x)
+        x = self.linear_a(x)
+        x = self.norm_h(x)
+        x = self.relu(x)
+        x = self.hidden(x)
+        x = self.norm(x)
+        x = self.relu(x)
+        x = self.linear_o(x)
+        return x
+        
+class Tre_trans(nn.Module):
+    def __init__(self, 
+                input_ftr, 
+                hidden_ftr, 
+                output_ftr,
+                input_step=256,
+                output_step=144, 
+                device='cpu')->None:
+        super(Tre_trans, self).__init__()
+        self.input_ftr = input_ftr
+        self.hidden_ftr  = hidden_ftr
+        self.output_step = output_step
+        self.input_step = input_step
+        self.output_ftr = output_ftr
+        self.device  = device
+        self.enc_layer = nn.TransformerEncoderLayer(self.hidden_ftr, 8)
+        self.enc = nn.TransformerEncoder(self.enc_layer, 1)
+        self.proj = nn.Linear(self.input_ftr, self.hidden_ftr)
+        self.dec = MLP(input_step, 128, output_step, hidden_ftr)
+        self.out = nn.Linear(self.hidden_ftr, self.output_ftr)
+        self.linear = nn.Linear(hidden_ftr, 1, bias=True)
+        self.norm = nn.BatchNorm1d(self.hidden_ftr)
+    
+    def _pos_embedding(self, embed_dim):
+        pos = torch.arange(self.input_step)
+        '''
+        perform sinosoidal encoding
+        '''
+        indices = torch.arange(embed_dim//2)
+        indices = 1./(10000 ** (indices/embed_dim*2)) # (d,)
+        sin_encoding = torch.sin(indices.view(-1, embed_dim//2) * pos.unsqueeze(1))
+        cos_encoding = torch.cos(indices.view(-1, embed_dim//2) * pos.unsqueeze(1)) #(t, d)
+        enc = torch.cat([sin_encoding, cos_encoding], dim=1)
+        enc = enc.unsqueeze(1)
+        return enc
+    def forward(self, x):
+        '''
+            x: (B, L, NT, H_input)
+        '''
+        x = self.proj(x) #(L, B, H_hidden)
+        B, L, NT, H = x.shape
+        pos = self._pos_embedding(x.shape[-1]).to(self.device)
+        x = x + pos
+        x = x.permute(1, 0, 2, 3).reshape(self.input_step, -1, self.hidden_ftr) #(T, (B*NT), H)
+        x = self.enc(x) #(T, (B*NT), H)
+        encoding = x.permute(1,2,0) #((B*NT), H, T)
+        y = self.dec(encoding).permute(2, 0, 1) #(Tout, (B*NT), H_hidden)
+        h_out = self.linear(y).reshape(-1, B, NT, 1)
+        return h_out
+
 
 
 

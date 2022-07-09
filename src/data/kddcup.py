@@ -19,6 +19,8 @@ def process_dataset(path: str,
     """
     train_val = pd.read_csv(path)
     turb_id = train_val['TurbID']
+    # day = train_val['Day']
+    # t = train_val['Tmstamp']
     wspd = train_val['Wspd']
     wdir = train_val['Wdir']
     etmp = train_val['Etmp']
@@ -30,11 +32,12 @@ def process_dataset(path: str,
     Prtv = train_val['Prtv']
     Patv = train_val['Patv']
     train_val_set = np.c_[turb_id,wspd,wdir,etmp,itmp,Ndir,Pab1,Pab2,Pab3,Prtv,Patv]
+    train_val_set = train_val_set.reshape(-1, 134, 11)
+
     x, y = [], []
     for j in range(step, train_val_set.shape[0] - output_step):
-        if train_val_set[j - step, 0] == train_val_set[j - 1, 0]:
-            x.append(train_val_set[j - step : j, :])
-            y.append(train_val_set[j : j + output_step, 10])
+        x.append(train_val_set[j - step : j, :, :])
+        y.append(train_val_set[j : j + output_step, :, 10])
     return x, y
 
 
@@ -60,5 +63,5 @@ class Kddcup(data.Dataset):
         return self._x[index], self._y[index]
 
 
-def load(PATH = '../data/train_val.csv') -> data.Dataset:
-    return Kddcup(PATH, step = 512, out_step = 144)
+def load(PATH = '../data/train_val.csv', step=256, out_step=144) -> data.Dataset:
+    return Kddcup(PATH, step = step, out_step = out_step)

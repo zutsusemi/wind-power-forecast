@@ -51,5 +51,5 @@ class Scada(data.Dataset):
         return self._x[index], self._y[index]
 
 
-def load(PATH = '../data/train_val.csv') -> data.Dataset:
+def load(PATH = '../data/train_val.csv', step=256, out_step=144) -> data.Dataset:
     return Scada(PATH, step = 512, out_step = 144)

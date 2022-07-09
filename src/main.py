@@ -31,11 +31,15 @@ def add_args() -> argparse.Namespace:
                         help='the path of saving results.')
     parser.add_argument("--dataset", default="kddcup", type=str,
                         help='the dataset name.')
-    parser.add_argument('--data_path', default='./kdd/sdwpf134_initial_kddcup.csv', type=str,
+    parser.add_argument('--data_path', default='./kdd/kdd.csv', type=str,
                         help='the dataset path.')
-    parser.add_argument("--model", default='attention', type=str,
+    parser.add_argument("--step", default=256, type=int,
+                        help="step")
+    parser.add_argument("--out_step", default=144, type=int,
+                        help="set the random seed.")
+    parser.add_argument("--model", default='attention_mlp', type=str,
                         help='the model name.')
-    parser.add_argument("--bs", default=5, type=int,
+    parser.add_argument("--bs", default=1, type=int,
                         help="set the batch size")
     parser.add_argument("--lr", default=0.0001, type=float,
                         help="set the learning rate")
@@ -88,11 +92,11 @@ def main():
 
     # prepare the dataset
     logger.info("#########preparing dataset....")
-    train_set, val_set = prepare_dataset(args.dataset, args.data_path)
+    train_set, val_set = prepare_dataset(args.dataset, args.data_path, args.step, args.out_step)
 
     # prepare the model
     logger.info("#########preparing model....")
-    model = prepare_model(args.device, args.model, args.dataset)
+    model = prepare_model(args.device, args.model, args.dataset, args.step, args.out_step)
     
     # train the model
     logger.info("#########training model....")

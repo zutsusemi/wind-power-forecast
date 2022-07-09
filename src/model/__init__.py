@@ -6,7 +6,9 @@ from utils import get_logger
 
 def prepare_model(device: torch.device,
                   model_name: str,
-                  dataset: str) -> nn.Module:
+                  dataset: str,
+                  step: int,
+                  out_step: int) -> nn.Module:
     """prepare the random initialized model according to the name.
     Args:
         model_name (str): the model name
@@ -25,7 +27,10 @@ def prepare_model(device: torch.device,
         model = lstm.Seq2SeqLSTM(1, 64, 1, 144, device).to(device)
     elif model_name == 'attention':
         import model.lstm as lstm
-        model = lstm.Tre(11, 64, 1, 512, 144, device).to(device)
+        model = lstm.Tre(11, 64, 1, step, out_step, device).to(device)
+    elif model_name == 'attention_mlp':
+        import model.lstm as lstm
+        model = lstm.Tre_trans(11, 64, 1, step, out_step, device).to(device)
     else:
         raise ValueError(f"unknown model name: {model_name}")
     return model
