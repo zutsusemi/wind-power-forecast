@@ -66,7 +66,7 @@ if you would like to contribute some codes, please submit a PR, and feel free to
 
 ## Contact
 
-Please contact [zzp1012@sjtu.edu.cn](mailto:zzp1012@sjtu.edu.cn) if you have any question on the codes.
+Please contact [zzp1012@sjtu.edu.cn](mailto:zzp1012@sjtu.edu.cn) or [1478752942@qq.com](1478752942@qq.com) if you have any question on the codes.
     
 ---------------------------------------------------------------------------------
 UM-SJTU Joint Institute 交大密西根学院
