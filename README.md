@@ -1,5 +1,5 @@
 # Wind Power Prediction
-
+![](./6000.jpg)
 ## Abstract
 
 **Overall Objective**: wind power forecast using deep learning approach.
