@@ -21,7 +21,7 @@ def add_args() -> argparse.Namespace:
                         help="set the device.")
     parser.add_argument("--seed", default=0, type=int,
                         help="set the random seed.")
-    parser.add_argument("--load", default=None, type=str,
+    parser.add_argument("--load", default='D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\model_weight_3000.pth', type=str,
                         help="load checkpoint.")
     parser.add_argument("--save", default='./output/', type=str,
                         help="save checkpoint path.")
@@ -31,9 +31,9 @@ def add_args() -> argparse.Namespace:
                         help='the path of saving results.')
     parser.add_argument("--dataset", default="kddcup", type=str,
                         help='the dataset name.')
-    parser.add_argument('--data_path', default='../kdd/kdd_train.csv', type=str,
+    parser.add_argument('--data_path', default='D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\kdd_train.csv', type=str,
                         help='the dataset path.')
-    parser.add_argument('--data_path_test', default='../kdd/kdd_test.csv', type=str,
+    parser.add_argument('--data_path_test', default='D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\kdd_test.csv', type=str,
                         help='the test dataset path.')
     parser.add_argument("--step", default=256, type=int,
                         help="step")

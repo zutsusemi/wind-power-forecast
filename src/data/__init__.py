@@ -17,7 +17,14 @@ def prepare_dataset(dataset: str, PATH, step, out_step) -> Tuple[Dataset, Datase
     elif dataset == 'kddcup':
         import data.kddcup as kddcup
         dataset = kddcup.load(PATH, step, out_step)
-        size = [len(dataset) - len(dataset) // 100, len(dataset) // 100]
+        # size = [len(dataset) - len(dataset) // 100, len(dataset) // 100]
+        # train, val = random_split(dataset, size)
+        train = dataset
+        val  = 0.2 
+    elif dataset == 'kddcup_orig':
+        import data.kdd_original as kddcup_orig
+        dataset = kddcup_orig.load(PATH, step, out_step)
+        size = [len(dataset) - len(dataset) // 3000, len(dataset) // 3000]
         train, val = random_split(dataset, size)
     else:
         raise NotImplementedError(f"dataset {dataset} is not implemented.")

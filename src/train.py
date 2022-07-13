@@ -27,6 +27,22 @@ class Trainer:
         for p in self.model.parameters():
             s += len(p.flatten())
         print('Total params: ', str(s))
+    def _robustness(self):
+        self.model.eval()
+        var, count = 0, 0
+        mean = 0
+        with torch.no_grad():
+            for m, [x, y] in tqdm(enumerate(self.val_loader)):
+                x, y = x.float().to(self.device), y.float().to(self.device)
+                o = self.model(x)
+                o_2 = self.model(x+x*0.01)
+                var += torch.sum((o - o_2)**2)
+                mean += o.sum()
+                count += len(o.flatten())
+        var /= count
+        mean /= count
+        var = var ** 0.5
+        return mean, var
     def _checkpoint(self, mode = 'save', **kwargs):
         if mode == 'save' and "path" in kwargs.keys():
             pth = kwargs['path']
@@ -37,15 +53,23 @@ class Trainer:
             print('[logger] Checkpoint '+str(num_iter)+' saved.')
         elif mode == 'load' and "path" in kwargs.keys():
             pth = kwargs['path']
-            self.model.load_state_dict(pth)
+            self.model.load_state_dict(torch.load(pth))
 
             print('Loading checkpoint from ' + pth)
     
-    def _evaluation(self, count=0):
+    def _evaluation(self, count=0, anime=False):
         self.model.eval()
         sum = 0
         N = 0
-        for m, [x, y] in tqdm(enumerate(self.val_loader)):
+        import matplotlib.animation as animep
+        import matplotlib.pyplot as plt
+        metadata = dict(title='anime', artist='wasabi')
+        writer = animep.PillowWriter(fps=15,metadata=metadata)
+        fig_ = plt.figure()
+        ax  = fig_.subplots()
+        fp = 0
+        with writer.saving(fig_, 'D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\output\\ani.gif', 128):
+            for m, [x, y] in tqdm(enumerate(self.val_loader)):
                 x, y = x.float().to(self.device), y.float().to(self.device)
                 # print(x.shape)
                 with torch.no_grad():
@@ -57,24 +81,32 @@ class Trainer:
                 sum += loss
                 N += out.shape[0] * out.shape[1] * out.shape[2]
 
-                if m == 0:
+                x_ = x[0, :, 2, 10].detach().cpu().numpy() # (L, B, 1)
+                y_ = y[0, :, 2].squeeze().detach().cpu().numpy()
+                out_ = out[0, :, 2].squeeze().detach().cpu().numpy()
+
+
                 
-                    import matplotlib.pyplot as plt
-                    fig = plt.figure(figsize=(10,10))
-                    x_ = x[0, :, 2, 10].detach().cpu().numpy() # (L, B, 1)
-                    y_ = y[0, :, 2].squeeze().detach().cpu().numpy()
-                    out_ = out[0, :, 2].squeeze().detach().cpu().numpy()
-
-                    plt.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, y_]), label='gt')
-                    plt.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, out_]), label='predict')
-
-
-                    plt.legend()
-                    path = os.path.join(self.save, f'visualization/')
-                    os.makedirs(path, exist_ok=True)
-                    plt.savefig(os.path.join(path, f'{count}.jpg'))
+                if anime==True:
+                    ax.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, y_]), label='gt')
+                    ax.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, out_]), label='predict')
+                    ax.legend()
+                    ax.set_ylim(0,1000)
+                    plt.xlabel('Timestamp')
+                    plt.ylabel('Power')
+                    ax.axvline(x=256, c='b',ls='--',lw=1.5)
+                    writer.grab_frame()
+                    # plt.pause(0.1)
+                    plt.cla()
+                    fp += 1
                     
-                    plt.close('all')
+
+                    if fp > 2048:
+                        break
+                    
+
+                    
+                    
 
                     
         
@@ -101,7 +133,8 @@ class Trainer:
                 
                 if self.save is not None:
                     if count % self.s_iter == 0:
-                        print(self._evaluation(count))
+                        print(self._evaluation(count, anime=True))
+                        print(self._robustness())
                         self.model.train()
                         self._checkpoint('save', path = self.save, num_iter = count)
 
@@ -137,7 +170,7 @@ def train(device: torch.device,
     """
     # construct the data loader
     train_loader = DataLoader(train_set, batch_size, shuffle=True)
-    val_loader = DataLoader(val_set, 1, shuffle=True)
+    val_loader = DataLoader(val_set, 1, shuffle=False)
 
     # construct the loss function and optimizer
     loss = torch.nn.MSELoss(reduction='sum')
