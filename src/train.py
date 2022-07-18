@@ -68,41 +68,71 @@ class Trainer:
         fig_ = plt.figure()
         ax  = fig_.subplots()
         fp = 0
-        with writer.saving(fig_, 'D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\output\\ani.gif', 128):
-            for m, [x, y] in tqdm(enumerate(self.val_loader)):
-                x, y = x.float().to(self.device), y.float().to(self.device)
-                # print(x.shape)
-                with torch.no_grad():
-                    out = self.model(x)
-                # print(out.shape)
-                out = out.squeeze(-1).permute(1,0,2)
-                loss = ((out - y)**2).sum()
-                
-                sum += loss
-                N += out.shape[0] * out.shape[1] * out.shape[2]
+        y_lb = []
 
+        y_out = []
+        # with writer.saving(fig_, 'D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\output\\ani.gif', 128):
+        for m, [x, y] in tqdm(enumerate(self.val_loader)):
+            x, y = x.float().to(self.device), y.float().to(self.device)
+            # print(x.shape)
+            with torch.no_grad():
+                out = self.model(x)
+            # print(out.shape)
+            if out.shape[1] == 1:
+                    out = out.squeeze()
+                    y = y.squeeze()
+            else:
+                out = out.squeeze(-1).permute(1,0,2)
+            loss = ((out - y)**2).sum()
+
+            y_out.append(out.detach().cpu().numpy())
+            y_lb.append(y.detach().cpu().numpy())
+            
+            sum += loss
+            N += len(out.flatten())
+
+            if len(x.shape) > 2:
                 x_ = x[0, :, 2, 10].detach().cpu().numpy() # (L, B, 1)
                 y_ = y[0, :, 2].squeeze().detach().cpu().numpy()
                 out_ = out[0, :, 2].squeeze().detach().cpu().numpy()
+            
+        y_lb = np.array(y_lb)
+        y_out = np.array(y_out)
+        
 
+        import pandas as pd
+        dt = pd.DataFrame(dict(label=y_lb, pred=y_out))
+        
+        dt.to_csv('D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\output\\windsp.csv')
+
+        le = y_lb.shape[0]
+
+        ax.set_ylim(0, 10)
+
+
+        ax.plot(np.arange(le), y_lb, label='gt')
+        ax.plot(np.arange(le), y_out, label='predict')
+        plt.savefig('D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\output\\out.jpg')
+        
+        plt.close()
 
                 
-                if anime==True:
-                    ax.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, y_]), label='gt')
-                    ax.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, out_]), label='predict')
-                    ax.legend()
-                    ax.set_ylim(0,1000)
-                    plt.xlabel('Timestamp')
-                    plt.ylabel('Power')
-                    ax.axvline(x=256, c='b',ls='--',lw=1.5)
-                    writer.grab_frame()
-                    # plt.pause(0.1)
-                    plt.cla()
-                    fp += 1
+                # if anime==True:
+                #     ax.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, y_]), label='gt')
+                #     ax.plot(np.arange(x_.shape[0]+y_.shape[0]), np.concatenate([x_, out_]), label='predict')
+                #     ax.legend()
+                #     ax.set_ylim(0,1000)
+                #     plt.xlabel('Timestamp')
+                #     plt.ylabel('Power')
+                #     ax.axvline(x=256, c='b',ls='--',lw=1.5)
+                #     writer.grab_frame()
+                #     # plt.pause(0.1)
+                #     plt.cla()
+                #     fp += 1
                     
 
-                    if fp > 2048:
-                        break
+                #     if fp > 2048:
+                #         break
                     
 
                     
@@ -123,9 +153,13 @@ class Trainer:
             for m, [x, y] in enumerate(self.train_loader):
                 x, y = x.float().to(self.device), y.float().to(self.device)
                 out = self.model(x)
-                out = out.squeeze(-1).permute(1,0,2)
+                if out.shape[1] == 1:
+                    out = out.squeeze()
+                    y = y.squeeze()
+                else:
+                    out = out.squeeze(-1).permute(1,0,2)
                 self.optm.zero_grad()
-                loss = self.loss(out, y) / (out.shape[0] * out.shape[1] * out.shape[2])
+                loss = self.loss(out, y) / (len(out.flatten()))
                 loss.backward()
                 self.optm.step()
                 if (m % 100) == 0:
@@ -134,7 +168,7 @@ class Trainer:
                 if self.save is not None:
                     if count % self.s_iter == 0:
                         print(self._evaluation(count, anime=True))
-                        print(self._robustness())
+                        # print(self._robustness())
                         self.model.train()
                         self._checkpoint('save', path = self.save, num_iter = count)
 

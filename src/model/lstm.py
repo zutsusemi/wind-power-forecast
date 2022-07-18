@@ -245,6 +245,8 @@ class Tre_trans(nn.Module):
         '''
             x: (B, L, NT, H_input)
         '''
+        if len(x.shape) == 2:
+            x = x.unsqueeze(2).unsqueeze(3)
         x = self.proj(x) #(L, B, H_hidden)
         B, L, NT, H = x.shape
         pos = self._pos_embedding(x.shape[-1]).to(self.device)

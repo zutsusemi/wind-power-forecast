@@ -32,10 +32,10 @@ def process_dataset(path: str,
     Prtv = train_val['Prtv']
     Patv = train_val['Patv']
     train_val_set = np.c_[turb_id,wspd,wdir,etmp,itmp,Ndir,Pab1,Pab2,Pab3,Prtv,Patv]
-    W = 20
-    from tqdm import tqdm
-    for j in tqdm(range(W//2, train_val_set.shape[0] - W//2 - 1)):
-        train_val_set[j,  :] = np.mean(train_val_set[j-W//2:j+W//2+1, :], axis=0)
+    # W = 20
+    # from tqdm import tqdm
+    # for j in tqdm(range(W//2, train_val_set.shape[0] - W//2 - 1)):
+    #     train_val_set[j,  :] = np.mean(train_val_set[j-W//2:j+W//2+1, :], axis=0)
     x, y = [], []
     for j in range(step, train_val_set.shape[0] - output_step):
         if train_val_set[j - step, 0] == train_val_set[j + output_step - 1, 0]:

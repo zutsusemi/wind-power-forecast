@@ -26,6 +26,11 @@ def prepare_dataset(dataset: str, PATH, step, out_step) -> Tuple[Dataset, Datase
         dataset = kddcup_orig.load(PATH, step, out_step)
         size = [len(dataset) - len(dataset) // 3000, len(dataset) // 3000]
         train, val = random_split(dataset, size)
+    elif dataset == 'windsp':
+        import data.windspeed as windsp
+        dataset = windsp.load(PATH, step, out_step)
+        train = dataset
+        val = 0.2
     else:
         raise NotImplementedError(f"dataset {dataset} is not implemented.")
     return train, val

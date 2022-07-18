@@ -31,6 +31,9 @@ def prepare_model(device: torch.device,
     elif model_name == 'attention_mlp':
         import model.lstm as lstm
         model = lstm.Tre_trans(11, 64, 1, step, out_step, device).to(device)
+    elif model_name == 'lstm_turbine':
+        import model.lstm as lstm
+        model = lstm.Tre_trans(1, 64, 1, step, out_step, device).to(device)
     else:
         raise ValueError(f"unknown model name: {model_name}")
     return model
