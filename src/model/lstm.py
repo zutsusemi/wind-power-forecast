@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from .load_graph_data import get_adj_mat
 
 __all__ = ('LSTM', 'Seq2SeqLSTM')
 
@@ -205,6 +206,54 @@ class MLP(nn.Module):
         x = self.linear_o(x)
 #         x = self.norm_o(x)
         return x
+
+
+class Graphconv(nn.Module):
+    def __init__(self,
+                input_dim,
+                output_dim, 
+                bias=True):
+        super(Graphconv, self).__init__()
+        self.weight = nn.Parameter(torch.Tensor(input_dim, output_dim))
+        nn.init.xavier_uniform_(self.weight)
+        if bias:
+            self.bias = nn.Parameter(torch.Tensor(output_dim))
+            nn.init.zeros_(self.bias)
+        else:
+            self.register_parameter('bias', None)
+    
+    def forward(self, x, A):
+        x_W = x @ self.weight
+        A_x_W = A @ x_W
+        if self.bias is not None:
+            return A_x_W + self.bias
+        else:
+            return A_x_W
+
+class StackedGC(nn.Module):
+    def __init__(self,
+                input_dim,
+                hidden_dim,
+                output_dim,
+                bias=True, device='cpu'):
+        super(StackedGC, self).__init__()
+        self.gc_one = Graphconv(input_dim, hidden_dim)
+        self.gc_two = Graphconv(hidden_dim, output_dim)
+        self.relu = nn.ReLU()
+        self.device = device
+    
+    def forward(self, x, A):
+        H, W = A.shape
+        A += torch.eye(W).to(self.device) # A = A + I
+        Deg_inv = (1./ A.sum(axis=1)) * torch.eye(W).to(self.device)
+        # Deg_inv = (1./ Deg) ** 0.5
+        A = Deg_inv @ A @ Deg_inv
+        x = self.gc_two(self.relu(self.gc_one(x, A)), A)
+        return x
+
+
+
+
         
 class Tre_trans(nn.Module):
     def __init__(self, 
@@ -225,6 +274,7 @@ class Tre_trans(nn.Module):
         self.enc = nn.TransformerEncoder(self.enc_layer, 1)
         self.proj = nn.Linear(self.input_ftr, self.hidden_ftr)
         self.dec = MLP(input_step, 128, output_step, hidden_ftr)
+        self.graph_enc = StackedGC(self.hidden_ftr, self.hidden_ftr, self.hidden_ftr,True, device)
         self.out = nn.Linear(self.hidden_ftr, self.output_ftr)
         self.linear = nn.Linear(hidden_ftr, 1, bias=True)
         self.norm = nn.BatchNorm1d(self.hidden_ftr)
@@ -253,6 +303,19 @@ class Tre_trans(nn.Module):
         x = x + pos
         x = x.permute(1, 0, 2, 3).reshape(self.input_step, -1, self.hidden_ftr) #(T, (B*NT), H)
         x = self.enc(x) #(T, (B*NT), H)
+        x = x.reshape(-1, B, NT, H) #T, B, NT, H
+        x = x.reshape(-1, NT, H)#(T * B), NT, H
+        
+        pth = 'D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\sdwpf_baidukddcup2022_turb_location.CSV'
+
+        A = get_adj_mat(pth, 2000)
+        A = torch.tensor(A).to(self.device)
+        res = x
+        x = self.graph_enc(x, A)
+        x = x + res
+        x = x.reshape(L, -1, H)
+
+
         encoding = x.permute(1,2,0) #((B*NT), H, T)
 #         out_pos = self._pos_embedding()
         y = self.dec(encoding).permute(2, 0, 1) #(Tout, (B*NT), H_hidden)

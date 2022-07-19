@@ -6,8 +6,7 @@ data/
 !src/data/
 kdd/
 
-# ignore .sh / .csv
-*.sh
+# ignore .csv
 *.csv
 
 

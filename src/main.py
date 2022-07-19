@@ -21,7 +21,7 @@ def add_args() -> argparse.Namespace:
                         help="set the device.")
     parser.add_argument("--seed", default=0, type=int,
                         help="set the random seed.")
-    # parser.add_argument("--load", default='D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\model_weight_3000.pth', type=str,
+    # parser.add_argument("--load", default='D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\model_weight_6000.pth', type=str,
     #                     help="load checkpoint.")
     parser.add_argument("--load", default=None, type=str,
                         help="load checkpoint.")
@@ -31,17 +31,17 @@ def add_args() -> argparse.Namespace:
                         help="save checkpoint per s_iter iters.")
     parser.add_argument("--save_root", default="../outs/tmp/", type=str,
                         help='the path of saving results.')
-    parser.add_argument("--dataset", default="windsp", type=str,
+    parser.add_argument("--dataset", default="kddcup", type=str,
                         help='the dataset name.')
-    parser.add_argument('--data_path', default='D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\save_upload_table1.xlsx', type=str,
+    parser.add_argument('--data_path', default='D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\kdd_train.csv', type=str,
                         help='the dataset path.')
-    parser.add_argument('--data_path_test', default='D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\windsp_test.xlsx', type=str,
+    parser.add_argument('--data_path_test', default='D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\kdd_test.csv', type=str,
                         help='the test dataset path.')
-    parser.add_argument("--step", default=5, type=int,
+    parser.add_argument("--step", default=256, type=int,
                         help="step")
-    parser.add_argument("--out_step", default=1, type=int,
+    parser.add_argument("--out_step", default=144, type=int,
                         help="set the random seed.")
-    parser.add_argument("--model", default='lstm_turbine', type=str,
+    parser.add_argument("--model", default='attention_mlp', type=str,
                         help='the model name.')
     parser.add_argument("--bs", default=1, type=int,
                         help="set the batch size")

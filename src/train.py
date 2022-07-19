@@ -78,7 +78,7 @@ class Trainer:
             with torch.no_grad():
                 out = self.model(x)
             # print(out.shape)
-            if out.shape[1] == 1:
+            if out.shape[0] == 1:
                     out = out.squeeze()
                     y = y.squeeze()
             else:
@@ -96,25 +96,25 @@ class Trainer:
                 y_ = y[0, :, 2].squeeze().detach().cpu().numpy()
                 out_ = out[0, :, 2].squeeze().detach().cpu().numpy()
             
-        y_lb = np.array(y_lb)
-        y_out = np.array(y_out)
+        # y_lb = np.array(y_lb)
+        # y_out = np.array(y_out)
         
 
-        import pandas as pd
-        dt = pd.DataFrame(dict(label=y_lb, pred=y_out))
+        # import pandas as pd
+        # dt = pd.DataFrame(dict(label=y_lb, pred=y_out))
         
-        dt.to_csv('D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\output\\windsp.csv')
+        # dt.to_csv('D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\output\\windsp.csv')
 
-        le = y_lb.shape[0]
+        # le = y_lb.shape[0]
 
-        ax.set_ylim(0, 10)
+        # ax.set_ylim(0, 10)
 
 
-        ax.plot(np.arange(le), y_lb, label='gt')
-        ax.plot(np.arange(le), y_out, label='predict')
-        plt.savefig('D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\output\\out.jpg')
+        # ax.plot(np.arange(le), y_lb, label='gt')
+        # ax.plot(np.arange(le), y_out, label='predict')
+        # plt.savefig('D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\output\\out.jpg')
         
-        plt.close()
+        # plt.close()
 
                 
                 # if anime==True:
