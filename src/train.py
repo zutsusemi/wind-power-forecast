@@ -120,10 +120,10 @@ class Trainer:
                     ax.legend()
                     ax.set_ylim(0,2)
                     plt.xlabel('Timestamp')
-                    plt.ylabel('Power')
+                    plt.ylabel('c * Power ** 0.5')
                     ax.axvline(x=14, c='b',ls='--',lw=1.5)
                     # writer.grab_frame()
-                    plt.pause(0.1)
+                    plt.pause(0.2)
                     plt.cla()
                     fp += 1
                 
