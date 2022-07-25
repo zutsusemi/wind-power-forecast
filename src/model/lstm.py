@@ -303,19 +303,17 @@ class Tre_trans(nn.Module):
         x = x + pos
         x = x.permute(1, 0, 2, 3).reshape(self.input_step, -1, self.hidden_ftr) #(T, (B*NT), H)
         x = self.enc(x) #(T, (B*NT), H)
-        x = x.reshape(-1, B, NT, H) #T, B, NT, H
-        x = x.reshape(-1, NT, H)#(T * B), NT, H
-        
-        pth = 'D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\sdwpf_baidukddcup2022_turb_location.CSV'
-
-        A = get_adj_mat(pth, 2000)
-        A = torch.tensor(A).to(self.device)
-        res = x
-        x = self.graph_enc(x, A)
-        x = x + res
-        x = x.reshape(L, -1, H)
-
-
+        if self.output_step > 1:   
+            x = x.reshape(-1, B, NT, H) #T, B, NT, H
+            x = x.reshape(-1, NT, H)#(T * B), NT, H
+            pth = 'D:\\2021_Summer\\VE450\\models\\wind-power-forecast\\kdd\\sdwpf_baidukddcup2022_turb_location.CSV'
+            
+            A = get_adj_mat(pth, 2000)
+            A = torch.tensor(A).to(self.device)
+            res = x
+            x = self.graph_enc(x, A)
+            x = x + res
+            x = x.reshape(L, -1, H)
         encoding = x.permute(1,2,0) #((B*NT), H, T)
 #         out_pos = self._pos_embedding()
         y = self.dec(encoding).permute(2, 0, 1) #(Tout, (B*NT), H_hidden)
